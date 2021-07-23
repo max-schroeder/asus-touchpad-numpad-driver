@@ -17,7 +17,6 @@ tries = 5
 # Look into the devices file #
 while tries > 0:
 
-    keyboard_detected = 0
     touchpad_detected = 0
 
     with open('/proc/bus/input/devices', 'r') as f:
@@ -38,25 +37,12 @@ while tries > 0:
                     touchpad = touchpad.split(" ")[0]
                     touchpad_detected = 2
 
-            # Look for the keyboard (numlock) # AT Translated Set OR Asus Keyboard
-            if keyboard_detected == 0 and ("Name=\"AT Translated Set 2 keyboard" in line or "Name=\"Asus Keyboard" in line):
-                keyboard_detected = 1
-
-            if keyboard_detected == 1:
-                if "H: " in line:
-                    keyboard = line.split("event")[1]
-                    keyboard = keyboard.split(" ")[0]
-                    keyboard_detected = 2
-
-            # Stop looking if both have been found #
-            if keyboard_detected == 2 and touchpad_detected == 2:
+            if touchpad_detected == 2:
                 break
 
-    if keyboard_detected != 2 or touchpad_detected != 2:
+    if touchpad_detected != 2:
         tries -= 1
         if tries == 0:
-            if keyboard_detected != 2:
-                print("Can't find keyboard, code " + str(keyboard_detected))
             if touchpad_detected != 2:
                 print("Can't find touchpad, code " + str(touchpad_detected))
             if touchpad_detected == 2 and not device_id.isnumeric():
@@ -76,11 +62,6 @@ ai = d_t.absinfo[EV_ABS.ABS_X]
 (minx, maxx) = (ai.minimum, ai.maximum)
 ai = d_t.absinfo[EV_ABS.ABS_Y]
 (miny, maxy) = (ai.minimum, ai.maximum)
-
-# Start monitoring the keyboard (numlock) #
-fd_k = open('/dev/input/event' + str(keyboard), 'rb')
-fcntl(fd_k, F_SETFL, O_NONBLOCK)
-d_k = Device(fd_k)
 
 model = 'm433ia' # Model used in the derived script (with symbols)
 
@@ -153,15 +134,6 @@ numlock=False
 
 # Process events while running #
 while True:
-
-    # If keyboard sends numlock event with F8 key tap, enable/disable touchpad events #
-    for e in d_k.events():
-        if e.matches(EV_KEY.KEY_F8) and e.value == 1:
-            numlock = not numlock
-            if numlock:
-                activate_numlock()
-            else:
-                deactivate_numlock()
 
     # If touchpad sends tap events, convert x/y position to numlock key and send it #
     for e in d_t.events():
