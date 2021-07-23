@@ -4,9 +4,9 @@ After=sddm.service display-manager.service
 
 [Service]
 Type=simple
+ExecStartPre=/bin/sleep 5
 ExecStart=/usr/share/asus_touchpad_numpad-driver/asus_touchpad.py $LAYOUT $PERCENTAGE_KEY
-StandardInput=tty-force
-TimeoutSec=5
+TimeoutSec=10
 
 [Install]
 WantedBy=default.target
